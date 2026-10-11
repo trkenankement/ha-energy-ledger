@@ -4,7 +4,7 @@
 
 Elektrik, doğalgaz ve su faturalarının aylık tüketimini ve tutarını Home Assistant içinde kaydedin; ardından Enerji ekranında tüketim ve maliyet olarak görüntüleyin. Banka/bulut hesabı veya akıllı sayaç gerekmez.
 
-Bu bir **özel entegrasyondur**; resmi Home Assistant entegrasyonu veya Supervisor uygulaması değildir. 0.2.0 geliştirme sürümüdür. Gerçek HA 2026.10.1, Recorder ve kalıcı saklama ile sentetik testler geçti. Aylık tüketim ve maliyet canlı HA Enerji ekranında da doğrulandı. Uçtan uca HACS kurulumu ayrı bir kontrol olarak hâlâ bekliyor.
+Bu bir **özel entegrasyondur**; resmi Home Assistant entegrasyonu veya Supervisor uygulaması değildir. 0.2.0 geliştirme sürümüdür. Gerçek HA 2026.10.1, Recorder ve kalıcı saklama ile sentetik testler geçti. Aylık ve yıllık tüketim/maliyet canlı HA Enerji ekranında doğrulandı. HACS özel deposundan kurulum, ardından yeniden başlatma ve kayıtların korunması kontrolü de geçti.
 
 ## 1. Neleri kaydeder?
 
@@ -33,7 +33,7 @@ HA 2026.10 veya üzeri, etkin Recorder ve tam saat UTC ofsetli saat dilimi gerek
 
 ### HACS özel deposu
 
-Depo herkese açıktır; HACS'ın varsayılan kataloğunda değildir. Hedef kurulum yolu **HACS → Özel depolar → depo adresi → Integration → indir → yeniden başlat** şeklindedir. Uçtan uca HACS kabulü henüz bekliyor; depo reddedilirse manuel kurulumu kullanın. Kurulum GitHub'dan kod indirir, faturalarınızı göndermez. Otomatik `git pull` yapılmaz.
+Depo herkese açıktır; HACS'ın varsayılan kataloğunda değildir. Kurulum yolu **HACS → Özel depolar → depo adresi → Integration → indir → yeniden başlat** şeklindedir. Bu yol v0.2.0 ile doğrulandı. Kurulum GitHub'dan kod indirir, faturalarınızı göndermez. Otomatik `git pull` yapılmaz.
 
 ## 3. Fatura ekleme ve düzeltme
 
@@ -92,4 +92,4 @@ Depo kökünde sentetik birim ve kontrat testleri:
 python -m unittest discover -s tests -v
 ```
 
-Testler düzeltme, tekrar giriş, silme, bağımsız aylık toplamlar, hatalı girdiler, tarih sınırları, çeviri yapısı ve import sınırlarını kapsar. Kaynak kodundaki ağ sınırı testi paket yakalama değildir. Gerçek HA testleri ile canlı arayüz kabulü ayrıdır; HACS/hassfest ve gerçek fatura grafikleri ayrıca doğrulanmalıdır. Uygulama HA'nın `async_add_external_statistics` API'sini, kümülatif toplamları ve saat başı UTC zamanlarını kullanır.
+Testler düzeltme, tekrar giriş, silme, bağımsız aylık toplamlar, hatalı girdiler, tarih sınırları, çeviri yapısı ve import sınırlarını kapsar. İzole gerçek HA'da 10 eşzamanlı düzeltme ve ikinci süreçte kalıcılık geçti. Canlı aylık/yıllık grafikler ve HACS kurulumu ayrı olarak doğrulandı. Bu kontroller kapsamlı stres testi veya hassfest sertifikasyonu değildir. Kaynak kodundaki ağ sınırı testi paket yakalama değildir. Uygulama HA'nın `async_add_external_statistics` API'sini, kümülatif toplamları ve saat başı UTC zamanlarını kullanır.

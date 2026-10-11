@@ -4,7 +4,7 @@
 
 Record monthly electricity, natural gas and water bills inside Home Assistant, then use their consumption and cost statistics in the Energy dashboard. No bank account, cloud account or meter hardware is required.
 
-This is a **custom integration**, not an official Home Assistant integration or Supervisor app. Version 0.2.0 is a development release. Synthetic tests with real Home Assistant 2026.10.1, Recorder and persistent storage passed. Monthly consumption and cost were also verified in a live HA Energy dashboard. End-to-end HACS installation remains a separate, pending check.
+This is a **custom integration**, not an official Home Assistant integration or Supervisor app. Version 0.2.0 is a development release. Synthetic tests with real Home Assistant 2026.10.1, Recorder and persistent storage passed. Monthly and annual consumption and cost were verified in a live HA Energy dashboard. Installation through a HACS custom repository, followed by restart and record persistence checks, also passed.
 
 ## 1. What it records
 
@@ -33,7 +33,7 @@ Take a full Home Assistant backup first.
 
 ### HACS custom repository
 
-The repository is public, but is not in the default HACS catalogue. The intended custom-repository path is **HACS → Custom repositories → repository URL → Integration → download → restart**. End-to-end HACS validation is still pending; use manual installation if it is rejected. Installation downloads code from GitHub, not your bills. Updates are not automatic `git pull` operations.
+The repository is public, but is not in the default HACS catalogue. Use **HACS → Custom repositories → repository URL → Integration → download → restart**. This installation path was verified with v0.2.0. Installation downloads code from GitHub, not your bills. Updates are not automatic `git pull` operations.
 
 ## 3. Add or correct a bill
 
@@ -92,4 +92,4 @@ Run the synthetic unit and contract tests from the repository root:
 python -m unittest discover -s tests -v
 ```
 
-Tests cover corrections, repeated entry, deletion, independent monthly totals, malformed input, time boundaries, translation structure and import boundaries. Source-level no-network tests are not packet capture. Real HA test evidence is distinct from live UI acceptance; HACS/hassfest and actual bill graphs must be checked separately. The implementation uses HA's `async_add_external_statistics` API, cumulative sums and hourly UTC timestamps.
+Tests cover corrections, repeated entry, deletion, independent monthly totals, malformed input, time boundaries, translation structure and import boundaries. Ten concurrent corrections and persistence in a second process passed in isolated real HA. Live monthly/annual graphs and HACS installation were checked separately. These checks are not a comprehensive stress test or hassfest certification. Source-level no-network tests are not packet capture. The implementation uses HA's `async_add_external_statistics` API, cumulative sums and hourly UTC timestamps.
