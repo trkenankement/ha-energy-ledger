@@ -4,7 +4,7 @@
 
 Elektrik, doğalgaz ve su faturalarının aylık tüketimini ve tutarını Home Assistant içinde kaydedin; ardından Enerji ekranında tüketim ve maliyet olarak görüntüleyin. Banka/bulut hesabı veya akıllı sayaç gerekmez.
 
-Bu bir **özel entegrasyondur**; resmi Home Assistant entegrasyonu veya Supervisor uygulaması değildir. 0.2.0 geliştirme sürümüdür. Gerçek HA 2026.10.1, Recorder ve kalıcı saklama ile sentetik testler geçti. Aylık ve yıllık tüketim/maliyet canlı HA Enerji ekranında doğrulandı. HACS özel deposundan kurulum, ardından yeniden başlatma ve kayıtların korunması kontrolü de geçti.
+Bu bir **özel entegrasyondur**; resmi Home Assistant entegrasyonu veya Supervisor uygulaması değildir. 0.4.0, tam yedek sonrasında canlı Home Assistant 2026.10.1 sistemine kuruldu ve kabul edildi. Güncelleme ve yeniden başlatma boyunca 36 faturanın, altı özet toplamın ve altı Recorder istatistiğinin tamamı korundu. HACS özel depo kurulumu daha önce 0.2.0 ile doğrulandı; canlı 0.4.0 yükseltmesi elle yapıldı ve 0.4.0 artık HACS özel depoları için yayımlandı.
 
 ## 1. Neleri kaydeder?
 
@@ -23,6 +23,8 @@ Faturada birimini doğruladığınız tüketimi girin. kWh olarak faturalanan ga
 HA 2026.10 veya üzeri, etkin Recorder ve tam saat UTC ofsetli saat dilimi gerekir. Para birimi ve saat dilimi ilk kurulumda sabitlenir. TRY, EUR, USD ve GBP desteklenir. Entegrasyon ek pip paketi kurmaz; HA'nın sağladığı kütüphaneleri kullanır.
 
 Önce tam HA yedeği alın.
+
+Güncellemede kararlı `energy_ledger.<config-entry-id>` saklama anahtarı korunur. 0.4.0 mevcut defterin tamamını doğrular, Store `1.1` verisini `1.2` biçimine taşır ve ancak bundan sonra atomik olarak yazar. Faturaların yeniden girilmesi gerekmez. Güncelleme için entegrasyonu kaldırıp tekrar eklemeyin: bileşen dosyalarını değiştirin, HA'yı yeniden başlatın, kayıt sayısı ile aylık/yıllık toplamları doğrulayın. Geri dönüş için güncelleme öncesi yedeği saklayın; eski entegrasyon gelecekteki bir saklama şemasını anlayamayabilir.
 
 ### Manuel kurulum
 
@@ -70,9 +72,9 @@ Elektrik faturası evin şebeke toplamıdır; akıllı prizler cihaz alt kırıl
 
 ## 5. Mahremiyet ve erişim
 
-Entegrasyonda bulut istemcisi, telemetri veya dış ağ bağlantısı kodu yoktur. Kayıtlar HA'nın `.storage` dosyasında, Recorder istatistiklerinde ve sensör özelliklerinde tutulur. Kurulum/güncelleme araçları ve diğer HA entegrasyonları internete çıkabilir; bu uygulama güvenlik duvarı değildir. Canlı paket yakalama yapılmış olduğu iddia edilmez.
+Entegrasyonda bulut istemcisi, telemetri veya dış ağ bağlantısı kodu yoktur. Kayıtlar HA'nın `.storage` dosyasında, Recorder istatistiklerinde ve yedeklerinde tutulur. Özet sensörler toplamları, fatura sayısını ve son muhasebe ayını gösterir; tam fatura satırlarını artık yayımlamaz. Kurulum/güncelleme araçları ve diğer HA entegrasyonları internete çıkabilir; bu uygulama güvenlik duvarı değildir. Canlı paket yakalama yapılmış olduğu iddia edilmez.
 
-Yerel saklama, yalnız yöneticinin görebildiği veya bu bileşen tarafından şifrelenen saklama anlamına gelmez. Etkin fatura satırları sensör özelliklerine de eklenir; bu durumları okuyabilen HA kullanıcıları/istemcileri erişebilir. HA yedekleri de verileri içerebilir. Yapılandırma formları HA'nın yönetici yetkilerine dayanır. HA erişimini, dosyaları ve yedekleri koruyun; gerçek faturaları, `.storage`, parolaları veya yedek arşivlerini GitHub'a koymayın.
+Yerel saklama, yalnız yöneticinin görebildiği veya bu bileşen tarafından şifrelenen saklama anlamına gelmez. Özet durumlarını okuyabilen HA kullanıcıları/istemcileri toplamları, kayıt sayılarını ve son ayları görebilir. 0.2.x ile oluşmuş Recorder geçmişi ve eski yedekler tam fatura özelliklerini hâlâ içerebilir. Yapılandırma formları HA'nın yönetici yetkilerine dayanır. HA erişimini, dosyaları ve yedekleri koruyun; gerçek faturaları, `.storage`, parolaları veya yedek arşivlerini GitHub'a koymayın.
 
 Entegrasyonu kaldırmak kayıtları ve Recorder geçmişini otomatik temizlemez.
 
@@ -80,7 +82,8 @@ Entegrasyonu kaldırmak kayıtları ve Recorder geçmişini otomatik temizlemez.
 
 - Tek hane, kaynak başına tek aylık kayıt desteklenir. Çoklu sayaç, tarife hesabı, döviz dönüşümü ve PDF okuma yoktur.
 - Para birimi/saat dilimi değişikliği geçmiş kayıtları yeniden değerlemez. Tam saat olmayan saat dilimleri reddedilir.
-- Saatlik istatistik üretiminin sınırı 3.660 gündür. Eski kayıtlar otomatik sona ermez; bu yaşa yaklaşan kayıt defteri için taşıma gerekir. Süresiz arşiv desteği olarak düşünmeyin.
+- İstatistikler başlangıç, her fatura ayı ve son tamamlanan saat için seyrek kümülatif noktalar kullanır. 0.2.x yükseltmesinde yalnız altı Energy Ledger istatistiği temizlenip yeniden kurulur; fatura kayıtları ve diğer istatistikler korunur. Store `1.1` → `1.2` geçişi her kaydı doğrular ve taşınan veriyi atomik yazar. Yükseltmeden önce yedek alın; sonra kayıt sayısını ve aylık/yıllık toplamları yeniden kontrol edin.
+- Tek aktarım en fazla 360 satırdır. Kayan 120 aylık giriş penceresinin eski geçerli kayıtları düşürmemesi için kalıcı yerel defterin ayrı 10.000 kayıt güvenlik sınırı vardır.
 - Boş kayıt defterindeki sıfır toplam, evin hiç tüketmediğini göstermez.
 - İstatistik görünmüyorsa kaydın onaylandığını ve Recorder'ın çalıştığını kontrol edin; HA günlüklerinde `energy_ledger` arayın. Sorun ararken diğer çalışan Enerji kaynaklarını değiştirmeyin.
 
@@ -92,4 +95,4 @@ Depo kökünde sentetik birim ve kontrat testleri:
 python -m unittest discover -s tests -v
 ```
 
-Testler düzeltme, tekrar giriş, silme, bağımsız aylık toplamlar, hatalı girdiler, tarih sınırları, çeviri yapısı ve import sınırlarını kapsar. İzole gerçek HA'da 10 eşzamanlı düzeltme ve ikinci süreçte kalıcılık geçti. Canlı aylık/yıllık grafikler ve HACS kurulumu ayrı olarak doğrulandı. Bu kontroller kapsamlı stres testi veya hassfest sertifikasyonu değildir. Kaynak kodundaki ağ sınırı testi paket yakalama değildir. Uygulama HA'nın `async_add_external_statistics` API'sini, kümülatif toplamları ve saat başı UTC zamanlarını kullanır.
+Testler düzeltme, tekrar giriş, silme, bağımsız aylık toplamlar, hatalı girdiler, seyrek uzun geçmiş, tamamlanmamış saat, saat dilimi penceresi, saklanan kayıt bütünlüğü, çeviri yapısı ve import sınırlarını kapsar. İzole gerçek HA'da 10 eşzamanlı düzeltme ve ikinci süreçte kalıcılık geçti. 0.2.x–0.3.0 Recorder istatistik geçişi ile 0.3.x–0.4.0 Store geçişi ayrıca test edilir. 0.4.0 canlı kabulünde yeniden başlatma sonrasında 36 faturanın, altı özet toplamın ve altı sağlıklı Recorder istatistiğinin korunduğu, filtreli Core günlüğünün temiz olduğu doğrulandı. HACS kurulumu daha önce 0.2.0 ile kontrol edildi. Bu kontroller kapsamlı stres testi veya hassfest sertifikasyonu değildir. Kaynak kodundaki ağ sınırı testi paket yakalama değildir. Uygulama HA'nın `async_add_external_statistics` API'sini, kümülatif toplamları ve saat başı UTC zamanlarını kullanır.

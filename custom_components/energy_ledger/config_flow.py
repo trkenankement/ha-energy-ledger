@@ -5,7 +5,7 @@ from homeassistant.core import callback
 from homeassistant.helpers import selector
 from homeassistant.util import dt as dt_util
 from .const import DOMAIN
-from .ledger import KINDS, parse_import, validate_record
+from .ledger import KINDS, parse_import, validate_record, validate_timezone
 
 
 class EnergyLedgerFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -14,12 +14,21 @@ class EnergyLedgerFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         await self.async_set_unique_id(DOMAIN)
         self._abort_if_unique_id_configured()
+        errors = {}
         if user_input is not None:
-            return self.async_create_entry(title="Energy Ledger", data={
-                "currency": user_input["currency"],
-                "timezone": self.hass.config.time_zone,
-            })
-        return self.async_show_form(step_id="user", data_schema=vol.Schema({
+            timezone = dt_util.get_time_zone(self.hass.config.time_zone)
+            try:
+                if timezone is None:
+                    raise ValueError("unsupported_timezone")
+                validate_timezone(dt_util.utcnow(), timezone)
+            except ValueError as err:
+                errors["base"] = str(err)
+            else:
+                return self.async_create_entry(title="Energy Ledger", data={
+                    "currency": user_input["currency"],
+                    "timezone": self.hass.config.time_zone,
+                })
+        return self.async_show_form(step_id="user", errors=errors, data_schema=vol.Schema({
             vol.Required("currency", default=self.hass.config.currency):
                 vol.In(["TRY", "EUR", "USD", "GBP"]),
         }))
@@ -93,7 +102,12 @@ class BillOptions(config_entries.OptionsFlow):
 
     async def async_step_confirm(self, user_input=None):
         if user_input is not None:
-            await self.manager.save_record(self.pending)
+            try:
+                await self.manager.save_record(self.pending)
+            except ValueError as err:
+                return self.async_show_form(step_id="confirm", data_schema=vol.Schema({}),
+                    errors={"base": str(err)}, description_placeholders={
+                        "summary": self.summary(self.pending), "previous": "—"})
             return self.async_create_entry(title="", data={})
         row = self.pending
         previous = next((r for r in self.manager.records if r["kind"] == row["kind"]
@@ -110,7 +124,10 @@ class BillOptions(config_entries.OptionsFlow):
         if not choices:
             return self.async_abort(reason="no_records")
         if user_input is not None:
-            self.delete_key = user_input["record"]
+            self.delete_key = user_input.get("record")
+            if self.delete_key not in choices:
+                return self.async_show_form(step_id="delete", errors={"base": "record_not_found"},
+                    data_schema=vol.Schema({vol.Required("record"): vol.In(choices)}))
             self.delete_label = choices[self.delete_key]
             return await self.async_step_delete_confirm()
         return self.async_show_form(step_id="delete", data_schema=vol.Schema({
@@ -120,7 +137,12 @@ class BillOptions(config_entries.OptionsFlow):
     async def async_step_delete_confirm(self, user_input=None):
         if user_input is not None:
             kind, month = self.delete_key.split(":")
-            await self.manager.delete_record(kind, month)
+            try:
+                await self.manager.delete_record(kind, month)
+            except ValueError as err:
+                return self.async_show_form(step_id="delete_confirm", data_schema=vol.Schema({}),
+                    errors={"base": str(err)},
+                    description_placeholders={"summary": self.delete_label})
             return self.async_create_entry(title="", data={})
         return self.async_show_form(step_id="delete_confirm", data_schema=vol.Schema({}),
                                     description_placeholders={"summary": self.delete_label})

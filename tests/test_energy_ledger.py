@@ -28,10 +28,13 @@ class BillingTests(unittest.TestCase):
         usage, cost = ledger.statistics(records, "gas", self.tz, self.now)
         self.assertEqual(usage[-1]["sum"], 60)
         self.assertEqual(cost[-1]["sum"], 1200)
+        previous = 0
         for i, expected in enumerate(quantities, 1):
-            month_rows = [r for r in usage if r["start"].astimezone(self.tz).month == i]
-            before = next(r["sum"] for r in usage if r["start"] == month_rows[0]["start"] - ledger.timedelta(hours=1))
-            self.assertEqual(month_rows[-1]["sum"] - before, expected)
+            event = next(r for r in usage if
+                         r["start"].astimezone(self.tz).strftime("%Y-%m-%d %H:%M") ==
+                         f"2026-{i:02}-01 00:00")
+            self.assertEqual(event["sum"] - previous, expected)
+            previous = event["sum"]
 
     def test_repeat_and_correction_are_idempotent(self):
         rows = ledger.upsert([], self.record())
@@ -122,11 +125,75 @@ class BillingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "record_not_found"):
             ledger.remove(original, "gas", "2026-02")
 
-    def test_dst_boundaries_keep_hourly_utc_spacing(self):
-        rows = [self.record("2026-03", "9", "180")]
+    def test_sparse_points_keep_utc_alignment_across_dst(self):
+        rows = [self.record("2026-03", "9", "180"),
+                self.record("2026-04", "10", "200")]
         usage, _ = ledger.statistics(rows, "gas", ZoneInfo("Europe/Berlin"), self.now)
-        self.assertTrue(all(b["start"] - a["start"] == ledger.timedelta(hours=1)
-                            for a, b in zip(usage, usage[1:])))
+        self.assertEqual(usage, sorted(usage, key=lambda row: row["start"]))
+        self.assertTrue(all(row["start"].minute == row["start"].second == 0
+                            for row in usage))
+        self.assertEqual(len(usage), 4)  # baseline, two bills and one current tail
+
+    def test_sparse_history_scales_with_bills_and_does_not_expire(self):
+        records = []
+        serial = 2026 * 12 + 10 - 1
+        for age in range(120):
+            value = serial - age
+            records.append({"kind": "gas", "month": f"{value // 12:04}-{value % 12 + 1:02}",
+                            "consumption": "1", "cost": "2", "deleted": False})
+        usage, costs = ledger.statistics(records, "gas", self.tz, self.now)
+        self.assertLessEqual(len(usage), len(records) + 2)
+        self.assertEqual((usage[-1]["sum"], costs[-1]["sum"]), (120, 240))
+        old = [{"kind": "gas", "month": "2000-01", "consumption": "1",
+                "cost": "2", "deleted": False}]
+        self.assertEqual(ledger.statistics(old, "gas", self.tz, self.now)[0][-1]["sum"], 1)
+
+    def test_current_incomplete_hour_defers_month_event(self):
+        now = datetime(2026, 10, 1, 0, 30, tzinfo=self.tz)
+        row = ledger.validate_record(dict(kind="gas", month="2026-10",
+                                          consumption="5", cost="50"), now, self.tz)
+        usage, _ = ledger.statistics([row], "gas", self.tz, now)
+        self.assertEqual([point["sum"] for point in usage], [0])
+
+    def test_stored_rows_are_validated_without_expiring_history(self):
+        old = [{"kind": "gas", "month": "2000-01", "consumption": "1.5",
+                "cost": "2", "deleted": False}]
+        self.assertEqual(ledger.validate_stored_records(old)[0]["month"], "2000-01")
+        tombstone = [{**old[0], "consumption": "999", "cost": "999", "deleted": True}]
+        self.assertEqual(ledger.validate_stored_records(tombstone)[0]["consumption"], "0")
+        long_lived = []
+        for offset in range(361):
+            serial = 1900 * 12 + offset
+            long_lived.append({**old[0], "month": f"{serial // 12:04}-{serial % 12 + 1:02}"})
+        self.assertEqual(len(ledger.validate_stored_records(long_lived)), 361)
+        for invalid in [None, [{**old[0], "deleted": "yes"}], old + old,
+                        [{**old[0], "kind": "other"}], old * (ledger.MAX_STORED_RECORDS + 1)]:
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                ledger.validate_stored_records(invalid)
+
+    def test_storage_1_1_migration_preserves_all_records(self):
+        legacy = {
+            "records": [
+                self.record("2026-01", "12", "240"),
+                {**self.record("2026-02", "15", "300"),
+                 "consumption": "0", "cost": "0", "deleted": True},
+            ],
+            "projection_version": 2,
+        }
+        snapshot = {"records": [dict(row) for row in legacy["records"]],
+                    "projection_version": 2}
+        migrated = ledger.migrate_storage_data(1, 1, legacy)
+        self.assertEqual(migrated, snapshot)
+        self.assertEqual(legacy, snapshot)
+        with self.assertRaisesRegex(ValueError, "unsupported_storage_version"):
+            ledger.migrate_storage_data(2, 0, legacy)
+        with self.assertRaisesRegex(ValueError, "invalid_storage"):
+            ledger.migrate_storage_data(1, 1, {"records": legacy["records"] * 2})
+
+    def test_timezone_checks_full_entry_window(self):
+        ledger.validate_timezone(self.now, self.tz)
+        with self.assertRaisesRegex(ValueError, "unsupported_timezone"):
+            ledger.validate_timezone(self.now, ZoneInfo("Australia/Lord_Howe"))
 
 
 if __name__ == "__main__":

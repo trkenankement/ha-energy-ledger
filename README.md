@@ -4,7 +4,7 @@
 
 Record monthly electricity, natural gas and water bills inside Home Assistant, then use their consumption and cost statistics in the Energy dashboard. No bank account, cloud account or meter hardware is required.
 
-This is a **custom integration**, not an official Home Assistant integration or Supervisor app. Version 0.2.0 is a development release. Synthetic tests with real Home Assistant 2026.10.1, Recorder and persistent storage passed. Monthly and annual consumption and cost were verified in a live HA Energy dashboard. Installation through a HACS custom repository, followed by restart and record persistence checks, also passed.
+This is a **custom integration**, not an official Home Assistant integration or Supervisor app. Version 0.4.0 is installed and accepted on the live Home Assistant 2026.10.1 system after a full backup. All 36 bills, six summary totals and six Recorder statistics were retained across the update and restart. HACS custom-repository installation was previously verified with 0.2.0; the live 0.4.0 upgrade was installed manually and 0.4.0 is now published for HACS custom repositories.
 
 ## 1. What it records
 
@@ -23,6 +23,8 @@ Only enter a quantity whose unit is confirmed on the bill. Gas billed in kWh is 
 Requirements: Home Assistant 2026.10 or newer, Recorder enabled, and a time zone with whole-hour UTC offsets. The currency and time zone are fixed at initial setup. Supported currencies: TRY, EUR, USD and GBP. No additional pip requirements are installed by this integration; it uses libraries already supplied by Home Assistant.
 
 Take a full Home Assistant backup first.
+
+An update keeps the stable `energy_ledger.<config-entry-id>` storage key. Version 0.4.0 validates the complete existing ledger, migrates Store `1.1` to `1.2`, and only then writes it atomically. Bills do not need to be entered again. Do not remove and re-add the integration as an update method: replace the component files, restart HA, and verify the record count plus monthly/yearly totals. Keep the pre-update backup for rollback; an older integration may not understand a future storage schema.
 
 ### Manual installation
 
@@ -70,9 +72,9 @@ For electricity, treat the bill as the whole-home grid total and smart plugs as 
 
 ## 5. Privacy and access
 
-The integration contains no cloud client, telemetry or outbound network code. Bill data stays with Home Assistant in its `.storage` ledger, Recorder statistics and sensor attributes. Installation/update tooling and unrelated HA integrations can still use the internet; this integration is not a firewall. No live packet-capture claim is made.
+The integration contains no cloud client, telemetry or outbound network code. Bill data stays with Home Assistant in its `.storage` ledger, Recorder statistics and backups. Summary entities expose totals, bill count and latest accounting month, but no longer expose complete bill rows. Installation/update tooling and unrelated HA integrations can still use the internet; this integration is not a firewall. No live packet-capture claim is made.
 
-Local does **not** mean admin-only or encrypted by this component. Active bill rows are included in sensor attributes and can be visible to users or clients allowed to read those states. HA backups may also contain the data. Native configuration forms rely on Home Assistant's administrator permissions. Protect HA access, host files and backups; never publish actual bills, `.storage`, credentials or backup archives to GitHub.
+Local does **not** mean admin-only or encrypted by this component. Users or clients allowed to read summary states can see totals, record counts and latest months. Recorder history created by 0.2.x and old backups may still contain complete bill attributes. Native configuration forms rely on Home Assistant's administrator permissions. Protect HA access, host files and backups; never publish actual bills, `.storage`, credentials or backup archives to GitHub.
 
 Unloading/removing the integration does not automatically purge its stored bills or Recorder history.
 
@@ -80,7 +82,8 @@ Unloading/removing the integration does not automatically purge its stored bills
 
 - One household and one monthly record per resource; multiple meters, tariff calculations, currency conversion and PDF parsing are not supported.
 - Currency/time zone changes do not revalue historical entries. Non-whole-hour time zones are rejected.
-- The hourly projection is bounded to 3,660 days. Retained records do not automatically expire, so a ledger approaching that age needs migration; do not treat it as indefinite archival support.
+- Statistics use sparse cumulative points at the baseline, each bill month and the latest completed hour. Upgrading from 0.2.x clears and rebuilds only the six Energy Ledger statistics; bill records and unrelated statistics are retained. Store `1.1` to `1.2` migration validates every record and writes the migrated payload atomically. Take a backup before upgrading and re-check the record count plus monthly/yearly totals afterward.
+- A single import is limited to 360 rows. The retained local ledger has a separate 10,000-record safety limit so a rolling 120-month entry window does not expire older valid records.
 - Empty summary totals describe an empty ledger, not proof of zero household usage.
 - If statistics do not appear, verify a bill was confirmed and Recorder is running; check HA logs for `energy_ledger`. Do not replace unrelated working Energy sources while troubleshooting.
 
@@ -92,4 +95,4 @@ Run the synthetic unit and contract tests from the repository root:
 python -m unittest discover -s tests -v
 ```
 
-Tests cover corrections, repeated entry, deletion, independent monthly totals, malformed input, time boundaries, translation structure and import boundaries. Ten concurrent corrections and persistence in a second process passed in isolated real HA. Live monthly/annual graphs and HACS installation were checked separately. These checks are not a comprehensive stress test or hassfest certification. Source-level no-network tests are not packet capture. The implementation uses HA's `async_add_external_statistics` API, cumulative sums and hourly UTC timestamps.
+Tests cover corrections, repeated entry, deletion, independent monthly totals, malformed input, sparse long history, incomplete hours, timezone windows, stored-row integrity, translation structure and import boundaries. Ten concurrent corrections and persistence in a second process passed in isolated real HA. The 0.2.x-to-0.3.0 Recorder projection migration and the 0.3.x-to-0.4.0 Store migration are tested separately. Version 0.4.0 live acceptance verified 36 retained bills, unchanged six summary totals, six healthy Recorder statistics and clean filtered Core logs after restart. HACS installation was previously checked with 0.2.0. These checks are not a comprehensive stress test or hassfest certification. Source-level no-network tests are not packet capture. The implementation uses HA's `async_add_external_statistics` API, cumulative sums and hourly UTC timestamps.

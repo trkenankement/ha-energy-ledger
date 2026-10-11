@@ -70,7 +70,7 @@ class ContractTests(unittest.TestCase):
         self.assertIn("(README.md)", turkish)
         for guide in (english, turkish):
             for value in ("energy_ledger:gas_consumption", "energy_ledger:gas_cost",
-                          ".storage", "3,660" if guide == english else "3.660"):
+                          ".storage", "sparse" if guide == english else "seyrek"):
                 self.assertIn(value, guide)
         self.assertIn("not measured daily usage", english)
         self.assertIn("gerçek günlük kullanım değil", turkish)
@@ -93,6 +93,34 @@ class ContractTests(unittest.TestCase):
         assignments = [node for node in ast.walk(tree) if isinstance(node, ast.Assign)]
         self.assertFalse(any(isinstance(target, ast.Attribute) and target.attr == "_attr_state_class"
                              for node in assignments for target in node.targets))
+
+    def test_summary_attributes_do_not_expose_bill_rows(self):
+        source = (COMPONENT / "sensor.py").read_text(encoding="utf-8")
+        self.assertNotIn('"bills":', source)
+        self.assertIn('"bill_count":', source)
+        self.assertIn('"latest_month":', source)
+
+    def test_projection_migration_only_clears_owned_series(self):
+        source = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        self.assertIn("async_clear_statistics", source)
+        self.assertIn("PROJECTION_VERSION", source)
+        self.assertNotIn("recorder/clear_statistics", source)
+        constants = (COMPONENT / "const.py").read_text(encoding="utf-8")
+        self.assertRegex(constants, r"PROJECTION_VERSION\s*=\s*2")
+
+    def test_storage_and_ci_updates_are_versioned_and_immutable(self):
+        init = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+        constants = (COMPONENT / "const.py").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/tests.yml").read_text(encoding="utf-8")
+        self.assertIn("atomic_writes=True", init)
+        self.assertIn("migrate_storage_data", init)
+        self.assertRegex(constants, r"STORAGE_VERSION\s*=\s*1")
+        self.assertRegex(constants, r"STORAGE_MINOR_VERSION\s*=\s*2")
+        for line in (line.strip() for line in workflow.splitlines()
+                     if line.strip().startswith("- uses:")):
+            reference = line.split("@", 1)[1].split()[0]
+            self.assertRegex(reference, r"^[0-9a-f]{40}$")
 
 
 if __name__ == "__main__":

@@ -33,9 +33,12 @@ class BillSensor(SensorEntity):
 
     @property
     def extra_state_attributes(self):
+        active = [r for r in self.manager.records
+                  if r["kind"] == self.kind and not r["deleted"]]
         return {"statistic_id": f"{DOMAIN}:{self.kind}_{self.metric}",
                 "accounting_method": "monthly_bill_at_month_start_not_daily_measurement",
-                "bills": [dict(r) for r in self.manager.records if r["kind"] == self.kind and not r["deleted"]]}
+                "bill_count": len(active),
+                "latest_month": active[-1]["month"] if active else None}
 
     async def async_added_to_hass(self):
         self.async_on_remove(async_dispatcher_connect(self.hass, SIGNAL_UPDATED,

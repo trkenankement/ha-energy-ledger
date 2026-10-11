@@ -13,11 +13,14 @@
     "step": {
       "user": {
         "title": "Local monthly bills",
-        "description": "Track monthly electricity, gas and water bills. Choose the currency used on your bills; it cannot be changed through these forms later. Records stay in HA, including statistics, sensor attributes and backups; local storage is not admin-only.",
+        "description": "Track monthly electricity, gas and water bills. Choose the currency used on your bills; it cannot be changed through these forms later. Records stay in HA storage, statistics and backups; local storage is not admin-only.",
         "data": {
           "currency": "Currency"
         }
       }
+    },
+    "error": {
+      "unsupported_timezone": "Timezone must use whole-hour UTC offsets throughout the supported 120-month entry window."
     },
     "abort": {
       "already_configured": "Energy Ledger is already configured."
@@ -76,7 +79,8 @@
       "invalid_import": "Check the header and five columns. Maximum 360 records and 65,536 characters; no rows were saved.",
       "invalid_unit": "Unit mismatch: electricity must use kWh; gas and water must use m3/m³.",
       "duplicate_record": "The same resource and month appears more than once; keep a single row.",
-      "history_too_long": "Statistics history exceeds the 3,660-day bound; the import was not saved."
+      "ledger_full": "The local ledger safety limit has been reached; no record was saved.",
+      "record_not_found": "That bill no longer exists. Reopen the form and choose a current record."
     },
     "abort": {
       "no_records": "There are no bills to delete."

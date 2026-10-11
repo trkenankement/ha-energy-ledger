@@ -13,11 +13,14 @@
     "step": {
       "user": {
         "title": "Yerel fatura takibi",
-        "description": "Elektrik, doğalgaz ve su faturalarını aylık takip edin. Faturalarınızdaki para birimini seçin; bu formlardan sonradan değiştirilemez. Kayıtlar HA istatistiklerinde, sensör özelliklerinde ve yedeklerde de bulunabilir; yerel saklama yalnız yöneticiye özel değildir.",
+        "description": "Elektrik, doğalgaz ve su faturalarını aylık takip edin. Faturalarınızdaki para birimini seçin; bu formlardan sonradan değiştirilemez. Kayıtlar HA depolamasında, istatistiklerinde ve yedeklerinde bulunabilir; yerel saklama yalnız yöneticiye özel değildir.",
         "data": {
           "currency": "Para birimi"
         }
       }
+    },
+    "error": {
+      "unsupported_timezone": "Saat diliminin desteklenen 120 aylık giriş aralığının tamamında tam saat UTC ofsetleri kullanması gerekir."
     },
     "abort": {
       "already_configured": "Bu hane için fatura takibi zaten kurulmuş."
@@ -76,7 +79,8 @@
       "invalid_import": "Başlığı ve beş sütunu kontrol edin. En fazla 360 kayıt ve 65.536 karakter kabul edilir; hiçbir satır kaydedilmedi.",
       "invalid_unit": "Birim eşleşmiyor: elektrik kWh; doğalgaz ve su m3/m³ olmalıdır.",
       "duplicate_record": "Aynı kaynak ve ay birden fazla satırda bulunuyor; tek bir satır bırakın.",
-      "history_too_long": "İstatistik geçmişi 3.660 gün sınırını aşıyor; aktarım kaydedilmedi."
+      "ledger_full": "Yerel kayıt defterinin güvenlik sınırına ulaşıldı; hiçbir kayıt kaydedilmedi.",
+      "record_not_found": "Bu fatura artık yok. Formu yeniden açıp güncel bir kayıt seçin."
     },
     "abort": {
       "no_records": "Silinecek fatura yok."
