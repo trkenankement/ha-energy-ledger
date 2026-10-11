@@ -1,0 +1,69 @@
+{
+  "title": "Energy Ledger",
+  "selector": {
+    "resource": {
+      "options": {
+        "electricity": "Elektrik (kWh)",
+        "gas": "Doğalgaz (m³)",
+        "water": "Su (m³)"
+      }
+    }
+  },
+  "config": {
+    "step": {
+      "user": {
+        "title": "Yerel fatura takibi",
+        "description": "Aylık faturalar yalnız HA içinde saklanır. Para birimi geçmiş kayıtlar için sabittir.",
+        "data": {
+          "currency": "Para birimi"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Bu hane için fatura takibi zaten kurulmuş."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Aylık faturalar",
+        "menu_options": {
+          "record": "Fatura ekle / düzelt",
+          "delete": "Fatura sil"
+        }
+      },
+      "record": {
+        "title": "Fatura ekle / düzelt",
+        "description": "Elektrik: kWh; gaz ve su: m³. Ay YYYY-MM biçiminde. Ödeme/vade ayı tüketim dönemi değildir. Günlük ölçüm üretilmez.",
+        "data": {
+          "kind": "Kaynak",
+          "month": "Muhasebe ayı (YYYY-MM)",
+          "consumption": "Aylık tüketim",
+          "cost": "Toplam fatura tutarı"
+        }
+      },
+      "confirm": {
+        "title": "Kaydı onayla",
+        "description": "Yeni kayıt: {summary}\n\nÖnceki kayıt: {previous}\n\nAynı kaynak ve aydaki kaydı değiştirir; çift sayılmaz. Tüm tutar seçilen ayın ilk saatine kaydedilir, günlük dağılım değildir."
+      },
+      "delete": {
+        "title": "Silinecek faturayı seç",
+        "data": {
+          "record": "Fatura"
+        }
+      },
+      "delete_confirm": {
+        "title": "Silme işlemini onayla",
+        "description": "{summary}\n\nBu kayıt toplamdan çıkarılacak ve yalnız Energy Ledger istatistikleri yeniden hesaplanacak. Diğer cihaz geçmişlerine dokunulmaz."
+      }
+    },
+    "error": {
+      "invalid_amount": "Sıfır veya pozitif bir sayı girin. Binlik ayırıcı, NaN ve sonsuz değer kabul edilmez.",
+      "invalid_period": "YYYY-MM biçiminde, gelecekte olmayan ve son 120 ay içindeki bir ay girin.",
+      "unsupported_timezone": "Saat diliminin tam saat UTC ofseti kullanması gerekir."
+    },
+    "abort": {
+      "no_records": "Silinecek fatura yok."
+    }
+  }
+}

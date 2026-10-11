@@ -1,0 +1,12 @@
+{
+  "domain": "energy_ledger",
+  "name": "Energy Ledger",
+  "version": "0.1.0",
+  "config_flow": true,
+  "documentation": "https://github.com/trkenankement/ha-energy-ledger",
+  "issue_tracker": "https://github.com/trkenankement/ha-energy-ledger/issues",
+  "dependencies": ["recorder"],
+  "codeowners": ["@trkenankement"],
+  "iot_class": "local_push",
+  "requirements": []
+}

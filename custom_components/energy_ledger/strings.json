@@ -1,0 +1,69 @@
+{
+  "title": "Energy Ledger",
+  "selector": {
+    "resource": {
+      "options": {
+        "electricity": "Electricity (kWh)",
+        "gas": "Natural gas (m³)",
+        "water": "Water (m³)"
+      }
+    }
+  },
+  "config": {
+    "step": {
+      "user": {
+        "title": "Local monthly bills",
+        "description": "Bills stay in your Home Assistant. Currency is fixed for historical records.",
+        "data": {
+          "currency": "Currency"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Energy Ledger is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Monthly bills",
+        "menu_options": {
+          "record": "Add / correct bill",
+          "delete": "Delete bill"
+        }
+      },
+      "record": {
+        "title": "Add / correct bill",
+        "description": "Electricity: kWh; gas and water: m³. Use YYYY-MM. Payment month is not necessarily consumption month. This is not daily metering.",
+        "data": {
+          "kind": "Resource",
+          "month": "Accounting month (YYYY-MM)",
+          "consumption": "Monthly consumption",
+          "cost": "Total bill cost"
+        }
+      },
+      "confirm": {
+        "title": "Confirm bill",
+        "description": "New: {summary}\n\nPrevious: {previous}\n\nReplaces the same resource/month. The entire amount is allocated to the month's first hour, not distributed as measured daily usage."
+      },
+      "delete": {
+        "title": "Choose bill to delete",
+        "data": {
+          "record": "Bill"
+        }
+      },
+      "delete_confirm": {
+        "title": "Confirm deletion",
+        "description": "{summary}\n\nRemove this bill and recalculate only Energy Ledger statistics. Other integrations are not modified."
+      }
+    },
+    "error": {
+      "invalid_amount": "Enter a finite non-negative number without thousands separators.",
+      "invalid_period": "Enter YYYY-MM within the last 120 months, not in the future.",
+      "unsupported_timezone": "Timezone must use a whole-hour UTC offset."
+    },
+    "abort": {
+      "no_records": "There are no bills to delete."
+    }
+  }
+}
