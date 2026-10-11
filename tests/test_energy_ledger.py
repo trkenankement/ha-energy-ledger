@@ -61,6 +61,33 @@ class BillingTests(unittest.TestCase):
     def test_streams_are_separate(self):
         self.assertEqual(ledger.statistics([self.record()], "water", self.tz, self.now), ([], []))
 
+    def test_batch_import_explicit_units_and_decimal_comma(self):
+        text = "kind;month;unit;consumption;cost\ngas;2026-01;m3;12,5;240\nwater;2026-01;m³;4;80"
+        rows = ledger.parse_import(text, self.now, self.tz)
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]["consumption"], "12.5")
+        merged = ledger.merge_records([self.record()], rows, self.now, self.tz)
+        self.assertEqual(len(merged), 2)
+        self.assertEqual(ledger.merge_records(merged, rows, self.now, self.tz), merged)
+
+    def test_invalid_batch_does_not_change_original(self):
+        header = "kind;month;unit;consumption;cost\n"
+        for text in ["", header, "wrong;header\n",
+                     header + "gas;2026-01;kWh;12;240",
+                     header + "gas;2026-01;m3;12;240\ngas;2026-01;m3;13;260",
+                     header + "gas;2026-01;m3;12;240\nwater;2026-11;m3;2;30",
+                     "x" * 65537, header + 'gas;"2026-01;m3;12;240']:
+            with self.subTest(text=text[:80]), self.assertRaises(ValueError):
+                ledger.parse_import(text, self.now, self.tz)
+        original = [self.record()]
+        snapshot = [dict(row) for row in original]
+        with self.assertRaises(ValueError):
+            ledger.merge_records(original, [self.record(), self.record("2026-02",cost="10") | {"cost":"NaN"}],
+                                 self.now, self.tz)
+        self.assertEqual(original, snapshot)
+        with self.assertRaisesRegex(ValueError, "duplicate_record"):
+            ledger.merge_records(original, [self.record(), self.record()], self.now, self.tz)
+
     def test_amount_bounds_and_adversarial_text(self):
         self.assertEqual(ledger.amount("1000000000"), ledger.Decimal("1000000000"))
         self.assertEqual(ledger.amount("0.000001"), ledger.Decimal("0.000001"))

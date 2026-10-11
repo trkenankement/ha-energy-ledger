@@ -29,7 +29,8 @@
         "title": "Aylık faturaları yönet",
         "menu_options": {
           "record": "Fatura ekle / düzelt",
-          "delete": "Fatura sil"
+          "delete": "Fatura sil",
+          "import": "Toplu fatura aktar"
         }
       },
       "record": {
@@ -55,12 +56,27 @@
       "delete_confirm": {
         "title": "Silme işlemini onayla",
         "description": "{summary}\n\nOnayladığınızda fatura toplamdan çıkarılır ve yalnız Energy Ledger istatistikleri yeniden hesaplanır. Diğer entegrasyonlar değiştirilmez. Yerelde sıfır değerli silme işareti kalır; eski durum kayıtları ve yedek kopyaları silinmez."
+      },
+      "import": {
+        "title": "Toplu fatura aktarımı",
+        "description": "Noktalı virgülle ayrılmış kayıtları yapıştırın. İlk satır: kind;month;unit;consumption;cost\nKaynak: electricity, gas veya water. Ay: YYYY-MM. Birim: elektrik kWh, gaz/su m3. Tutar seçili para birimindedir. Örnek:\n\nkind;month;unit;consumption;cost\ngas;2026-01;m3;12,5;240\n\nSonraki adımda tüm kayıtları inceleyip onaylayacaksınız. Aynı kaynak/ay iki kez bulunamaz.",
+        "data": {
+          "bills": "Fatura kayıtları"
+        }
+      },
+      "import_confirm": {
+        "title": "Toplu aktarımı onayla",
+        "description": "{count} kayıt aktarılacak; {replaced} mevcut kayıt değiştirilecek. Onaydan önce tüm satırlar doğrulanır; aynı kaynak/ay çift sayılmaz. Eksik aylar silinmez. Aylık toplamlar ayın ilk saatine yazılır; günlük ölçüm değildir.\n\n{summary}"
       }
     },
     "error": {
       "invalid_amount": "0–1.000.000.000 arasında, en fazla altı ondalık basamaklı ve 32 karakterli sayı girin. Ondalık virgül veya nokta kullanın; binlik ayırıcı ve bilimsel gösterim kullanmayın.",
       "invalid_period": "YYYY-MM biçiminde, gelecekte olmayan ve son 120 ay içindeki bir ay girin.",
-      "unsupported_timezone": "Saat diliminin tam saat UTC ofseti kullanması gerekir."
+      "unsupported_timezone": "Saat diliminin tam saat UTC ofseti kullanması gerekir.",
+      "invalid_import": "Başlığı ve beş sütunu kontrol edin. En fazla 360 kayıt ve 65.536 karakter kabul edilir; hiçbir satır kaydedilmedi.",
+      "invalid_unit": "Birim eşleşmiyor: elektrik kWh; doğalgaz ve su m3/m³ olmalıdır.",
+      "duplicate_record": "Aynı kaynak ve ay birden fazla satırda bulunuyor; tek bir satır bırakın.",
+      "history_too_long": "İstatistik geçmişi 3.660 gün sınırını aşıyor; aktarım kaydedilmedi."
     },
     "abort": {
       "no_records": "Silinecek fatura yok."

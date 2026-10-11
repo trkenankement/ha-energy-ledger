@@ -29,7 +29,8 @@
         "title": "Manage monthly bills",
         "menu_options": {
           "record": "Add / correct bill",
-          "delete": "Delete bill"
+          "delete": "Delete bill",
+          "import": "Import multiple bills"
         }
       },
       "record": {
@@ -55,12 +56,27 @@
       "delete_confirm": {
         "title": "Confirm deletion",
         "description": "{summary}\n\nConfirm to remove this bill from the totals and recalculate only Energy Ledger statistics. Other integrations are not modified. A zero-valued deletion marker remains locally; this does not erase historical states or backup copies."
+      },
+      "import": {
+        "title": "Import multiple bills",
+        "description": "Paste semicolon-separated rows. Required header: kind;month;unit;consumption;cost\nResource: electricity, gas or water. Month: YYYY-MM. Unit: electricity kWh; gas/water m3. Costs use the configured currency. Example:\n\nkind;month;unit;consumption;cost\ngas;2026-01;m3;12.5;240\n\nReview and confirm all records next. Duplicate resource/month pairs are rejected.",
+        "data": {
+          "bills": "Bill records"
+        }
+      },
+      "import_confirm": {
+        "title": "Confirm bill import",
+        "description": "Import {count} records, replacing {replaced} existing bills. All rows are validated before saving; the same resource/month is not counted twice. Missing months are retained. Monthly totals are allocated to the month's first hour, not measured daily usage.\n\n{summary}"
       }
     },
     "error": {
       "invalid_amount": "Enter a number from 0 to 1,000,000,000 with at most six decimal places and 32 characters. Use a decimal point or comma, without thousands separators or scientific notation.",
       "invalid_period": "Enter YYYY-MM within the last 120 months, not in the future.",
-      "unsupported_timezone": "Timezone must use a whole-hour UTC offset."
+      "unsupported_timezone": "Timezone must use a whole-hour UTC offset.",
+      "invalid_import": "Check the header and five columns. Maximum 360 records and 65,536 characters; no rows were saved.",
+      "invalid_unit": "Unit mismatch: electricity must use kWh; gas and water must use m3/m³.",
+      "duplicate_record": "The same resource and month appears more than once; keep a single row.",
+      "history_too_long": "Statistics history exceeds the 3,660-day bound; the import was not saved."
     },
     "abort": {
       "no_records": "There are no bills to delete."

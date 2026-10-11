@@ -1,6 +1,8 @@
 """Packaging and no-network boundaries; not a live HA acceptance test."""
 import ast
 import json
+import struct
+import zlib
 from pathlib import Path
 import unittest
 
@@ -9,6 +11,28 @@ COMPONENT = ROOT / "custom_components/energy_ledger"
 
 
 class ContractTests(unittest.TestCase):
+    def test_local_brand_pngs_are_valid_and_sized_for_both_themes(self):
+        for filename, size in (("icon.png", 256), ("icon@2x.png", 512),
+                               ("dark_icon.png", 256), ("dark_icon@2x.png", 512)):
+            data = (COMPONENT / "brand" / filename).read_bytes()
+            self.assertEqual(data[:8], b"\x89PNG\r\n\x1a\n")
+            self.assertLess(len(data), 100_000)
+            self.assertEqual(struct.unpack(">II", data[16:24]), (size, size))
+            self.assertEqual(data[25], 6)  # RGBA supports transparent corners.
+            cursor = 8
+            kinds = []
+            while cursor < len(data):
+                length = struct.unpack(">I", data[cursor:cursor + 4])[0]
+                kind = data[cursor + 4:cursor + 8]
+                payload = data[cursor + 8:cursor + 8 + length]
+                crc = struct.unpack(">I", data[cursor + 8 + length:cursor + 12 + length])[0]
+                self.assertEqual(zlib.crc32(kind + payload) & 0xffffffff, crc)
+                kinds.append(kind)
+                cursor += length + 12
+            self.assertEqual(cursor, len(data))
+            self.assertEqual((kinds[0], kinds[-1]), (b"IHDR", b"IEND"))
+            self.assertIn(b"IDAT", kinds)
+
     def test_manifest_requires_local_recorder_only(self):
         manifest = json.loads((COMPONENT / "manifest.json").read_text())
         self.assertEqual(manifest["domain"], "energy_ledger")

@@ -1,10 +1,57 @@
 """Local monthly billing ledger; no Home Assistant or network dependency."""
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
+import csv
+from io import StringIO
 import re
 
 KINDS = {"electricity": "kWh", "gas": "m³", "water": "m³"}
 MAX_MONTHS = 120
+
+
+def parse_import(text, now, tz):
+    """Parse bounded, explicitly unit-labelled semicolon-separated input."""
+    if not isinstance(text, str) or not text.strip() or len(text) > 65536:
+        raise ValueError("invalid_import")
+    try:
+        reader = csv.reader(StringIO(text), delimiter=";", strict=True)
+        if next(reader, None) != ["kind", "month", "unit", "consumption", "cost"]:
+            raise ValueError("invalid_import")
+        rows = []
+        seen = set()
+        for fields in reader:
+            if not fields or all(not field.strip() for field in fields):
+                continue
+            if len(fields) != 5 or len(rows) >= MAX_MONTHS * len(KINDS):
+                raise ValueError("invalid_import")
+            kind, month, unit, consumption, cost = (f.strip() for f in fields)
+            if kind not in KINDS or unit.replace("m3", "m³") != KINDS[kind]:
+                raise ValueError("invalid_unit")
+            row = validate_record(dict(kind=kind, month=month,
+                                       consumption=consumption, cost=cost), now, tz)
+            key = (kind, month)
+            if key in seen:
+                raise ValueError("duplicate_record")
+            seen.add(key)
+            rows.append(row)
+    except csv.Error as err:
+        raise ValueError("invalid_import") from err
+    if not rows:
+        raise ValueError("invalid_import")
+    return rows
+
+
+def merge_records(existing, incoming, now, tz):
+    """Validate the entire batch before producing a replacement ledger."""
+    if not incoming or len(incoming) > MAX_MONTHS * len(KINDS):
+        raise ValueError("invalid_import")
+    validated = [validate_record(row, now, tz) for row in incoming]
+    keys = [(row["kind"], row["month"]) for row in validated]
+    if len(set(keys)) != len(keys):
+        raise ValueError("duplicate_record")
+    merged = {(r["kind"], r["month"]): dict(r) for r in existing}
+    merged.update(zip(keys, validated))
+    return sorted(merged.values(), key=lambda row: (row["kind"], row["month"]))
 
 
 def amount(value):

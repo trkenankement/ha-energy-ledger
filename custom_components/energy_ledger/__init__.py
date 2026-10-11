@@ -11,7 +11,7 @@ from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, PLATFORMS, SIGNAL_UPDATED
-from .ledger import KINDS, remove, statistics, upsert, validate_record
+from .ledger import KINDS, merge_records, remove, statistics, upsert, validate_record
 
 
 class LedgerManager:
@@ -70,6 +70,15 @@ class LedgerManager:
     async def delete_record(self, kind, month):
         async with self.lock:
             await self._commit(remove(self.records, kind, month))
+
+    async def save_records(self, incoming):
+        async with self.lock:
+            now = dt_util.utcnow()
+            records = merge_records(self.records, incoming, now, self.tz)
+            # Reject projection bounds before committing any of the batch.
+            for kind in KINDS:
+                await self.hass.async_add_executor_job(statistics, records, kind, self.tz, now)
+            await self._commit(records)
 
     async def _commit(self, records):
         # Durable ledger first. A restart retries projection if Recorder fails.

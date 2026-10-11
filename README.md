@@ -4,7 +4,7 @@
 
 Record monthly electricity, natural gas and water bills inside Home Assistant, then use their consumption and cost statistics in the Energy dashboard. No bank account, cloud account or meter hardware is required.
 
-This is a **custom integration**, not an official Home Assistant integration or Supervisor app. Version 0.1.0 is a development release. Synthetic tests with real Home Assistant 2026.10.1, Recorder and persistent storage passed; HACS installation and real-bill dashboard acceptance are separate, pending checks.
+This is a **custom integration**, not an official Home Assistant integration or Supervisor app. Version 0.2.0 is a development release. Synthetic tests with real Home Assistant 2026.10.1, Recorder and persistent storage passed. Monthly consumption and cost were also verified in a live HA Energy dashboard. End-to-end HACS installation remains a separate, pending check.
 
 ## 1. What it records
 
@@ -45,6 +45,12 @@ The repository is public, but is not in the default HACS catalogue. The intended
 Use the consumption period, not automatically the payment or due-date month. A bill spanning two months needs an explicit accounting choice; the integration does not infer or prorate it. The current month and previous 119 months can be entered.
 
 To correct a bill, enter the same resource and month again. To remove one, choose **Delete bill**, select the record and confirm. Only Energy Ledger statistics are recalculated; other integrations' history is not changed. A zero-valued deletion marker remains in local storage so old statistics can be overwritten. This is not secure erasure from Recorder history or backups.
+
+### Import several bills
+
+Choose **Import bills** in Configure and paste semicolon-separated rows with the exact header `kind;month;unit;consumption;cost`. Use `electricity` with `kWh`, or `gas`/`water` with `m3` (also accepts `m³`). Costs use the currency selected at setup. Decimal commas are accepted.
+
+Review every row before confirming. All rows are validated before saving; duplicate resource/month pairs within one import are rejected. An existing resource/month is replaced, while months omitted from the import are preserved. At most 360 rows and 65,536 characters are accepted. Recorder publishing follows the local save; this is not an atomic database transaction and interrupted publishing is rebuilt on startup.
 
 ## 4. Connect the Energy dashboard
 

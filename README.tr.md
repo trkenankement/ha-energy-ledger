@@ -4,7 +4,7 @@
 
 Elektrik, doğalgaz ve su faturalarının aylık tüketimini ve tutarını Home Assistant içinde kaydedin; ardından Enerji ekranında tüketim ve maliyet olarak görüntüleyin. Banka/bulut hesabı veya akıllı sayaç gerekmez.
 
-Bu bir **özel entegrasyondur**; resmi Home Assistant entegrasyonu veya Supervisor uygulaması değildir. 0.1.0 geliştirme sürümüdür. Gerçek HA 2026.10.1, Recorder ve kalıcı saklama ile sentetik testler geçti; HACS kurulumu ve gerçek faturaların canlı grafik kabulü henüz ayrı olarak doğrulanmadı.
+Bu bir **özel entegrasyondur**; resmi Home Assistant entegrasyonu veya Supervisor uygulaması değildir. 0.2.0 geliştirme sürümüdür. Gerçek HA 2026.10.1, Recorder ve kalıcı saklama ile sentetik testler geçti. Aylık tüketim ve maliyet canlı HA Enerji ekranında da doğrulandı. Uçtan uca HACS kurulumu ayrı bir kontrol olarak hâlâ bekliyor.
 
 ## 1. Neleri kaydeder?
 
@@ -45,6 +45,12 @@ Depo herkese açıktır; HACS'ın varsayılan kataloğunda değildir. Hedef kuru
 Ödeme/vade ayını otomatik olarak tüketim ayı kabul etmeyin. İki aya yayılan fatura için muhasebe ayını sizin seçmeniz gerekir; entegrasyon dönem tahmini veya orantılı dağıtım yapmaz. Bu ay ve önceki 119 ay girilebilir.
 
 Düzeltmek için aynı kaynağı ve ayı tekrar girin. Silmek için **Fatura sil** menüsünden kaydı seçip onaylayın. Yalnız Energy Ledger istatistikleri yeniden hesaplanır; diğer entegrasyonların geçmişi değiştirilmez. Eski istatistikleri sıfırlamak için yerelde sıfır değerli silme işareti tutulur. Bu işlem Recorder geçmişi veya yedeklerden güvenli veri imhası değildir.
+
+### Birden fazla faturayı aktarma
+
+Yapılandır menüsünden **Toplu fatura aktar** seçip noktalı virgülle ayrılmış satırları yapıştırın. Başlık tam olarak `kind;month;unit;consumption;cost` olmalıdır. `electricity` için `kWh`, `gas`/`water` için `m3` (veya `m³`) kullanın. Tutarlar kurulumda seçilen para birimindedir. Ondalık virgül kabul edilir.
+
+Onaylamadan önce her satırı inceleyin. Bütün satırlar kayıttan önce doğrulanır; aynı aktarımda tekrarlanan kaynak/ay reddedilir. Mevcut kaynak/ay değiştirilir; aktarımda olmayan aylar korunur. En fazla 360 satır ve 65.536 karakter kabul edilir. Recorder yayını yerel kayıttan sonra yapılır; bu atomik bir veritabanı işlemi değildir ve kesilen yayın açılışta yeniden oluşturulur.
 
 ## 4. Enerji ekranına bağlama
 
