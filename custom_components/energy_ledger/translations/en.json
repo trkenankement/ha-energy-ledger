@@ -13,7 +13,7 @@
     "step": {
       "user": {
         "title": "Local monthly bills",
-        "description": "Bills stay in your Home Assistant. Currency is fixed for historical records.",
+        "description": "Track monthly electricity, gas and water bills. Choose the currency used on your bills; it cannot be changed through these forms later. Records stay in HA, including statistics, sensor attributes and backups; local storage is not admin-only.",
         "data": {
           "currency": "Currency"
         }
@@ -26,7 +26,7 @@
   "options": {
     "step": {
       "init": {
-        "title": "Monthly bills",
+        "title": "Manage monthly bills",
         "menu_options": {
           "record": "Add / correct bill",
           "delete": "Delete bill"
@@ -34,7 +34,7 @@
       },
       "record": {
         "title": "Add / correct bill",
-        "description": "Electricity: kWh; gas and water: m³. Use YYYY-MM. Payment month is not necessarily consumption month. This is not daily metering.",
+        "description": "1. Select the resource.\n2. Enter its accounting month as YYYY-MM, not automatically the payment month.\n3. Enter consumption (electricity: kWh; gas/water: m³) and total cost in your configured currency. Use a decimal point or comma, without thousands separators.\n\nYou will review and confirm next. Monthly bills do not provide measured daily usage.",
         "data": {
           "kind": "Resource",
           "month": "Accounting month (YYYY-MM)",
@@ -44,7 +44,7 @@
       },
       "confirm": {
         "title": "Confirm bill",
-        "description": "New: {summary}\n\nPrevious: {previous}\n\nReplaces the same resource/month. The entire amount is allocated to the month's first hour, not distributed as measured daily usage."
+        "description": "New bill: {summary}\n\nPrevious bill: {previous}\n\nConfirm to save. An existing bill for the same resource and month is replaced, not counted twice. The full consumption and cost are allocated to the month's first hour; use monthly/yearly Energy views."
       },
       "delete": {
         "title": "Choose bill to delete",
@@ -54,11 +54,11 @@
       },
       "delete_confirm": {
         "title": "Confirm deletion",
-        "description": "{summary}\n\nRemove this bill and recalculate only Energy Ledger statistics. Other integrations are not modified."
+        "description": "{summary}\n\nConfirm to remove this bill from the totals and recalculate only Energy Ledger statistics. Other integrations are not modified. A zero-valued deletion marker remains locally; this does not erase historical states or backup copies."
       }
     },
     "error": {
-      "invalid_amount": "Enter a finite non-negative number without thousands separators.",
+      "invalid_amount": "Enter a number from 0 to 1,000,000,000 with at most six decimal places and 32 characters. Use a decimal point or comma, without thousands separators or scientific notation.",
       "invalid_period": "Enter YYYY-MM within the last 120 months, not in the future.",
       "unsupported_timezone": "Timezone must use a whole-hour UTC offset."
     },

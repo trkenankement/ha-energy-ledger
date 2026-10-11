@@ -13,7 +13,7 @@
     "step": {
       "user": {
         "title": "Yerel fatura takibi",
-        "description": "Aylık faturalar yalnız HA içinde saklanır. Para birimi geçmiş kayıtlar için sabittir.",
+        "description": "Elektrik, doğalgaz ve su faturalarını aylık takip edin. Faturalarınızdaki para birimini seçin; bu formlardan sonradan değiştirilemez. Kayıtlar HA istatistiklerinde, sensör özelliklerinde ve yedeklerde de bulunabilir; yerel saklama yalnız yöneticiye özel değildir.",
         "data": {
           "currency": "Para birimi"
         }
@@ -26,7 +26,7 @@
   "options": {
     "step": {
       "init": {
-        "title": "Aylık faturalar",
+        "title": "Aylık faturaları yönet",
         "menu_options": {
           "record": "Fatura ekle / düzelt",
           "delete": "Fatura sil"
@@ -34,7 +34,7 @@
       },
       "record": {
         "title": "Fatura ekle / düzelt",
-        "description": "Elektrik: kWh; gaz ve su: m³. Ay YYYY-MM biçiminde. Ödeme/vade ayı tüketim dönemi değildir. Günlük ölçüm üretilmez.",
+        "description": "1. Kaynağı seçin.\n2. Muhasebe ayını YYYY-MM olarak girin; ödeme ayını otomatik olarak kullanmayın.\n3. Tüketimi (elektrik: kWh; gaz/su: m³) ve toplam tutarı seçtiğiniz para biriminde yazın. Ondalık virgül veya nokta kullanabilirsiniz; binlik ayırıcı kullanmayın.\n\nSonraki adımda inceleyip onaylayacaksınız. Aylık fatura gerçek günlük ölçüm sağlamaz.",
         "data": {
           "kind": "Kaynak",
           "month": "Muhasebe ayı (YYYY-MM)",
@@ -44,7 +44,7 @@
       },
       "confirm": {
         "title": "Kaydı onayla",
-        "description": "Yeni kayıt: {summary}\n\nÖnceki kayıt: {previous}\n\nAynı kaynak ve aydaki kaydı değiştirir; çift sayılmaz. Tüm tutar seçilen ayın ilk saatine kaydedilir, günlük dağılım değildir."
+        "description": "Yeni fatura: {summary}\n\nÖnceki fatura: {previous}\n\nKaydetmek için onaylayın. Aynı kaynak ve aydaki eski fatura değiştirilir; çift sayılmaz. Tüketim ve tutarın tamamı ayın ilk saatine yazılır; Enerji ekranında aylık/yıllık görünümü kullanın."
       },
       "delete": {
         "title": "Silinecek faturayı seç",
@@ -54,11 +54,11 @@
       },
       "delete_confirm": {
         "title": "Silme işlemini onayla",
-        "description": "{summary}\n\nBu kayıt toplamdan çıkarılacak ve yalnız Energy Ledger istatistikleri yeniden hesaplanacak. Diğer cihaz geçmişlerine dokunulmaz."
+        "description": "{summary}\n\nOnayladığınızda fatura toplamdan çıkarılır ve yalnız Energy Ledger istatistikleri yeniden hesaplanır. Diğer entegrasyonlar değiştirilmez. Yerelde sıfır değerli silme işareti kalır; eski durum kayıtları ve yedek kopyaları silinmez."
       }
     },
     "error": {
-      "invalid_amount": "Sıfır veya pozitif bir sayı girin. Binlik ayırıcı, NaN ve sonsuz değer kabul edilmez.",
+      "invalid_amount": "0–1.000.000.000 arasında, en fazla altı ondalık basamaklı ve 32 karakterli sayı girin. Ondalık virgül veya nokta kullanın; binlik ayırıcı ve bilimsel gösterim kullanmayın.",
       "invalid_period": "YYYY-MM biçiminde, gelecekte olmayan ve son 120 ay içindeki bir ay girin.",
       "unsupported_timezone": "Saat diliminin tam saat UTC ofseti kullanması gerekir."
     },

@@ -1,69 +1,89 @@
-# Energy Ledger — yerel aylık faturalar
+# Energy Ledger
 
-Geliştirme sürümü. İzole Home Assistant 2026.10.1 / Python 3.14 üzerinde
-gerçek Recorder, kayıt formları ve yeniden başlatma testleri geçti.
-HA 2026.10.1'e yedek sonrası kuruldu; Türkçe giriş formu ve altı varlık
-doğrulandı. Gerçek fatura/grafik kabulü bekliyor. HACS'ın varsayılan
-kataloğuna dahil değildir; özel depo yöntemi için aşağıdaki adımları kullanın.
+[Türkçe kılavuz](README.tr.md)
 
-Elektrik (kWh), doğalgaz (m³) ve su (m³) faturalarını HA'nın **Yapılandır**
-formundan girer. Tüketim ve tutar ayrı geçmiş istatistiklerine aktarılır.
-Bulut, telemetri, banka bağlantısı ve ek Python bağımlılığı yoktur.
+Record monthly electricity, natural gas and water bills inside Home Assistant, then use their consumption and cost statistics in the Energy dashboard. No bank account, cloud account or meter hardware is required.
 
-## Kurulum ve kullanım
+This is a **custom integration**, not an official Home Assistant integration or Supervisor app. Version 0.1.0 is a development release. Synthetic tests with real Home Assistant 2026.10.1, Recorder and persistent storage passed; HACS installation and real-bill dashboard acceptance are separate, pending checks.
 
-GitHub deposu: https://github.com/trkenankement/ha-energy-ledger
+## 1. What it records
 
-HACS üzerinden: önce tam yedek alın. HACS → Özel depolar bölümünde depo
-adresini **Integration** türünde ekleyin; Energy Ledger'ı indirin ve HA'yı
-yeniden başlatın. Bu işlem GitHub'dan sürüm dosyalarını indirir; faturalarınızı
-GitHub'a göndermez. Güncellemeler HACS ile yönetilir, otomatik `git pull` yapılmaz.
-Depo özel ise bu HACS yöntemi kullanılamaz; manuel kurulumu kullanın.
+| Resource | Consumption unit | Cost |
+| --- | --- | --- |
+| Electricity | kWh | Selected currency |
+| Natural gas | m³ | Selected currency |
+| Water | m³ | Selected currency |
 
-Manuel kurulum:
+One record per resource and accounting month. Entering that same pair again replaces the previous bill instead of adding it twice. Six summary entities show recorded totals; historical consumption and cost are published as separate Recorder statistics.
 
-1. `custom_components/energy_ledger` klasörünü HA'nın `/config/custom_components/`
-   dizinine kopyalayın. Önce yedek alın; HA'yı yeniden başlatın.
-2. Ayarlar → Cihazlar ve hizmetler → Entegrasyon ekle → Energy Ledger.
-3. Para birimini seçin; entegrasyonun **Yapılandır** menüsünden kayıt girin.
-4. Ay `YYYY-MM`, tüketim ve maliyet sayı olmalıdır. Ondalık virgül kabul edilir;
-   binlik ayırıcı kullanmayın. Görünmeyen tüketim birimini tahmin etmeyin.
-5. Enerji ayarlarında gaz/su/şebeke tüketim kaynağına `energy_ledger:gas_consumption`,
-   `energy_ledger:water_consumption` veya `energy_ledger:electricity_consumption`
-   istatistiğini seçin. Maliyet kaynağı ilgili `energy_ledger:*_cost` istatistiğidir.
-   Kaynakların listelenmesi Recorder kuyruğunun işlenmesini gerektirir.
+Only enter a quantity whose unit is confirmed on the bill. Gas billed in kWh is not automatically converted to m³. Missing bills do not establish zero consumption.
 
-## Muhasebe anlamı
+## 2. Install
 
-**Bu günlük ölçüm değil, aylık fatura muhasebesidir.** Girdiğiniz ayın ilk saatine
-ayın tamamı yazılır. Aylık/yıllık görünüm kullanın; günlük grafikler gerçek
-tüketim dağılımını göstermez. Ödeme tarihi, tüketim dönemi değildir. Fatura
-dönemi bilinmiyorsa seçtiğiniz ayın ödeme/vade ayı olduğunu ayrıca not edin.
-Eksik ay, gerçek sıfır tüketim anlamına gelmez.
+Requirements: Home Assistant 2026.10 or newer, Recorder enabled, and a time zone with whole-hour UTC offsets. The currency and time zone are fixed at initial setup. Supported currencies: TRY, EUR, USD and GBP. No additional pip requirements are installed by this integration; it uses libraries already supplied by Home Assistant.
 
-Her kaynak/ay için tek kayıt vardır. Değiştirmek için aynı ayı yeniden girin;
-onay ekranında önceki kayıt gösterilir. Silme ayrı onay ister ve yalnız bu
-entegrasyonun ürettiği istatistikleri yeniden hesaplar. Diğer HA istatistikleri
-silinmez. Silinen ayın sıfır tombstone kaydı yerelde tutulur.
+Take a full Home Assistant backup first.
 
-Elektrik faturasını prizlerin toplamına ayrıca eklemeyin: aynı tüketimi iki
-kere sayarsınız. Fatura tüm ev şebeke toplamı, prizler cihaz alt kırılımıdır.
+### Manual installation
 
-Kayıtlar HA `.storage` altında yereldir ve HA yedeğiyle korunur. Entegrasyon
-kaldırılınca geçmişi otomatik silmez. Tek hane / kaynak başına tek sayaç,
-son 120 ay, dört para birimi desteklenir. Para birimi ve saat dilimi ilk
-kurulumda sabitlenir; farklı birime geçmişi yeniden yorumlama yapılmaz.
-Saat dilimi tam saat UTC ofseti kullanmalıdır.
+1. Download the source from [ha-energy-ledger](https://github.com/trkenankement/ha-energy-ledger).
+2. Copy `custom_components/energy_ledger` into `/config/custom_components/`, preserving the folder structure.
+3. Restart Home Assistant.
+4. Open **Settings → Devices & services → Add integration → Energy Ledger** and select the currency.
 
-## Geliştirme / yayın
+### HACS custom repository
 
-Gerçek faturalar, kimlikler, HA yedekleri ve `.storage` GitHub'a konmaz.
-Sürüm geliştirme aşamasındadır: hassfest/HACS ve gerçek enerji grafik kabulü
-ayrı kontrol kapılarıdır; kaynak testlerinin geçmesi bu kontrollerin geçtiği
-anlamına gelmez. Resmi Home Assistant entegrasyonu veya Supervisor uygulaması
-değil, özel entegrasyondur.
+The repository is public, but is not in the default HACS catalogue. The intended custom-repository path is **HACS → Custom repositories → repository URL → Integration → download → restart**. End-to-end HACS validation is still pending; use manual installation if it is rejected. Installation downloads code from GitHub, not your bills. Updates are not automatic `git pull` operations.
 
-Sentetik testler: `python -m unittest discover -s tests -v`.
+## 3. Add or correct a bill
 
-API referansı: HA Core 2026.10 Recorder `async_add_external_statistics`;
-`mean_type`, `unit_class`, saat başı UTC damgası ve kümülatif `sum` kullanılır.
+1. Open the integration's **Configure** menu and select **Add / correct bill**.
+2. Select the resource and enter its accounting month as `YYYY-MM`, for example `2026-01`.
+3. Enter the month's consumption and total bill cost. A decimal point or comma is accepted; do not use thousands separators. Values must be between 0 and 1,000,000,000, with at most six decimal places.
+4. Review the new and previous values, then confirm. Closing the form before confirmation does not save the bill.
+
+Use the consumption period, not automatically the payment or due-date month. A bill spanning two months needs an explicit accounting choice; the integration does not infer or prorate it. The current month and previous 119 months can be entered.
+
+To correct a bill, enter the same resource and month again. To remove one, choose **Delete bill**, select the record and confirm. Only Energy Ledger statistics are recalculated; other integrations' history is not changed. A zero-valued deletion marker remains in local storage so old statistics can be overwritten. This is not secure erasure from Recorder history or backups.
+
+## 4. Connect the Energy dashboard
+
+After saving a bill, let Recorder process its queue. Open **Settings → Dashboards → Energy**, choose the relevant electricity/gas/water source, and select:
+
+| Resource | Consumption statistic | Cost statistic |
+| --- | --- | --- |
+| Electricity | `energy_ledger:electricity_consumption` | `energy_ledger:electricity_cost` |
+| Natural gas | `energy_ledger:gas_consumption` | `energy_ledger:gas_cost` |
+| Water | `energy_ledger:water_consumption` | `energy_ledger:water_cost` |
+
+Use the corresponding total-cost statistic when configuring cost tracking. These are external statistics, not the six summary sensor entities. If no bill has been saved for a resource, its statistics may not yet be offered.
+
+**Choose monthly or yearly views.** A whole monthly bill is allocated to the selected month's first hour. Daily/hourly graphs therefore show an accounting spike, not measured daily usage. No invented daily breakdown is generated.
+
+For electricity, treat the bill as the whole-home grid total and smart plugs as individual-device breakdowns. Do not add the same measured household total and its bill as two grid sources: that double-counts consumption.
+
+## 5. Privacy and access
+
+The integration contains no cloud client, telemetry or outbound network code. Bill data stays with Home Assistant in its `.storage` ledger, Recorder statistics and sensor attributes. Installation/update tooling and unrelated HA integrations can still use the internet; this integration is not a firewall. No live packet-capture claim is made.
+
+Local does **not** mean admin-only or encrypted by this component. Active bill rows are included in sensor attributes and can be visible to users or clients allowed to read those states. HA backups may also contain the data. Native configuration forms rely on Home Assistant's administrator permissions. Protect HA access, host files and backups; never publish actual bills, `.storage`, credentials or backup archives to GitHub.
+
+Unloading/removing the integration does not automatically purge its stored bills or Recorder history.
+
+## 6. Limits and troubleshooting
+
+- One household and one monthly record per resource; multiple meters, tariff calculations, currency conversion and PDF parsing are not supported.
+- Currency/time zone changes do not revalue historical entries. Non-whole-hour time zones are rejected.
+- The hourly projection is bounded to 3,660 days. Retained records do not automatically expire, so a ledger approaching that age needs migration; do not treat it as indefinite archival support.
+- Empty summary totals describe an empty ledger, not proof of zero household usage.
+- If statistics do not appear, verify a bill was confirmed and Recorder is running; check HA logs for `energy_ledger`. Do not replace unrelated working Energy sources while troubleshooting.
+
+## 7. Verification and development
+
+Run the synthetic unit and contract tests from the repository root:
+
+```sh
+python -m unittest discover -s tests -v
+```
+
+Tests cover corrections, repeated entry, deletion, independent monthly totals, malformed input, time boundaries, translation structure and import boundaries. Source-level no-network tests are not packet capture. Real HA test evidence is distinct from live UI acceptance; HACS/hassfest and actual bill graphs must be checked separately. The implementation uses HA's `async_add_external_statistics` API, cumulative sums and hourly UTC timestamps.

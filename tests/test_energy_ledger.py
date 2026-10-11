@@ -61,6 +61,40 @@ class BillingTests(unittest.TestCase):
     def test_streams_are_separate(self):
         self.assertEqual(ledger.statistics([self.record()], "water", self.tz, self.now), ([], []))
 
+    def test_amount_bounds_and_adversarial_text(self):
+        self.assertEqual(ledger.amount("1000000000"), ledger.Decimal("1000000000"))
+        self.assertEqual(ledger.amount("0.000001"), ledger.Decimal("0.000001"))
+        for value in ["1000000000.000001", "0.0000001", "1; DROP TABLE bills",
+                      "../../secrets", "<script>alert(1)</script>", "1e9", "+1",
+                      "1_000", "1 000", "9" * 33]:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                ledger.amount(value)
+
+    def test_month_window_timezone_and_resource_boundaries(self):
+        self.assertEqual(self.record("2016-11")["month"], "2016-11")
+        for month in ["2016-10", "2026-11", "2026-00", "2026-1", "../2026-01"]:
+            with self.subTest(month=month), self.assertRaises(ValueError):
+                self.record(month)
+        with self.assertRaisesRegex(ValueError, "unsupported_timezone"):
+            ledger.validate_record(dict(kind="gas", month="2026-01",
+                                        consumption="1", cost="1"),
+                                   self.now, ZoneInfo("Asia/Kolkata"))
+        with self.assertRaises(ValueError):
+            ledger.validate_record(dict(kind="../../other", month="2026-01",
+                                        consumption="1", cost="1"), self.now, self.tz)
+
+    def test_record_mutations_preserve_caller_and_other_resources(self):
+        original = [self.record(), {**self.record(), "kind": "water"}]
+        snapshot = [dict(row) for row in original]
+        changed = ledger.upsert(original, self.record(consumption="42"))
+        deleted = ledger.remove(changed, "gas", "2026-01")
+        self.assertEqual(original, snapshot)
+        self.assertEqual([r for r in deleted if r["kind"] == "water"],
+                         [r for r in snapshot if r["kind"] == "water"])
+        self.assertEqual(ledger.remove(deleted, "gas", "2026-01"), deleted)
+        with self.assertRaisesRegex(ValueError, "record_not_found"):
+            ledger.remove(original, "gas", "2026-02")
+
     def test_dst_boundaries_keep_hourly_utc_spacing(self):
         rows = [self.record("2026-03", "9", "180")]
         usage, _ = ledger.statistics(rows, "gas", ZoneInfo("Europe/Berlin"), self.now)

@@ -34,6 +34,23 @@ class ContractTests(unittest.TestCase):
         translated = set(strings["config"]["step"]) | set(strings["options"]["step"])
         self.assertEqual(steps, translated)
 
+    def test_english_source_and_translation_are_identical(self):
+        read = lambda p: json.loads(p.read_text(encoding="utf-8"))
+        self.assertEqual(read(COMPONENT / "strings.json"),
+                         read(COMPONENT / "translations/en.json"))
+
+    def test_bilingual_guides_link_and_warn_about_monthly_accounting(self):
+        english = (ROOT / "README.md").read_text(encoding="utf-8")
+        turkish = (ROOT / "README.tr.md").read_text(encoding="utf-8")
+        self.assertIn("(README.tr.md)", english)
+        self.assertIn("(README.md)", turkish)
+        for guide in (english, turkish):
+            for value in ("energy_ledger:gas_consumption", "energy_ledger:gas_cost",
+                          ".storage", "3,660" if guide == english else "3.660"):
+                self.assertIn(value, guide)
+        self.assertIn("not measured daily usage", english)
+        self.assertIn("gerçek günlük kullanım değil", turkish)
+
     def test_no_network_or_direct_database_imports(self):
         forbidden = {"requests", "aiohttp", "httpx", "socket", "urllib", "sqlite3", "sqlalchemy"}
         for path in COMPONENT.glob("*.py"):
